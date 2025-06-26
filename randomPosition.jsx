@@ -1,13 +1,27 @@
-// 選択したレイヤーをランダムな位置に移動させるスクリプト
-var selectedLayers = app.project.activeItem.selectedLayers;
+// ランダム範囲を指定（必要に応じて調整）
+var minX = -500, maxX = 500;
+var minY = -300, maxY = 300;
+var minZ = -200, maxZ = 200;
 
-app.beginUndoGroup("ランダム位置に移動");
+var comp = app.project.activeItem;
+if (comp && comp instanceof CompItem) {
+    app.beginUndoGroup("Randomize Position");
 
-for (var i = 0; i < selectedLayers.length; i++) {
-    var layer = selectedLayers[i];
-    var randomX = Math.random() * app.project.activeItem.width;
-    var randomY = Math.random() * app.project.activeItem.height;
-    layer.property("Position").setValue([randomX, randomY]);
+    for (var i = 1; i <= comp.selectedLayers.length; i++) {
+        var layer = comp.selectedLayers[i - 1];
+
+        // 3Dレイヤーになっていない場合は有効化
+        if (!layer.threeDLayer) {
+            layer.threeDLayer = true;
+        }
+
+        var randomPos = [
+            random(minX, maxX),
+            random(minY, maxY),
+            random(minZ, maxZ)
+        ];
+        layer.property("Position").setValue(randomPos);
+    }
+
+    app.endUndoGroup();
 }
-
-app.endUndoGroup();
