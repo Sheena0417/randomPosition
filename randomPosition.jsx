@@ -2,28 +2,53 @@
     function buildUI(thisObj) {
         var win = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Randomize Position", undefined, { resizeable: false });
+            : new Window("palette", "Randomize Position", undefined, { resizeable: true });
 
         if (win !== null) {
             win.orientation = "column";
-            win.alignChildren = ["fill", "top"];
+            win.alignChildren = ["center", "top"];
+            win.spacing = 10;
+            win.margins = 10;
 
             function createAxisGroup(axis, defaultMin, defaultMax) {
-                var group = win.add("group");
-                group.orientation = "row";
-                var check = group.add("checkbox", undefined, axis.toUpperCase());
-                var min = group.add("edittext", undefined, defaultMin);
-                min.characters = 6;
-                var max = group.add("edittext", undefined, defaultMax);
-                max.characters = 6;
-                return { check: check, min: min, max: max };
+                var outerGroup = win.add("group");
+                outerGroup.orientation = "row";
+                outerGroup.alignChildren = ["center", "center"];
+                outerGroup.alignment = "center";
+
+                var check = outerGroup.add("checkbox", undefined, axis.toUpperCase());
+                check.preferredSize.width = 50;
+
+                var min = outerGroup.add("edittext", undefined, defaultMin);
+                var max = outerGroup.add("edittext", undefined, defaultMax);
+
+                min.characters = 4;
+                max.characters = 4;
+
+                min.onChanging = function () {
+                    adjustEditWidth(min);
+                };
+                max.onChanging = function () {
+                    adjustEditWidth(max);
+                };
+
+                adjustEditWidth(min);
+                adjustEditWidth(max);
+
+                return { group: outerGroup, check: check, min: min, max: max };
+            }
+
+            function adjustEditWidth(textbox) {
+                var len = textbox.text.length;
+                var width = Math.max(4, len) * 8 + 20; // 8px * 桁数 + padding
+                textbox.preferredSize.width = width;
+                textbox.parent.layout.layout(true);
             }
 
             var xGroup = createAxisGroup("x", "0", "1000");
             var yGroup = createAxisGroup("y", "0", "1000");
             var zGroup = createAxisGroup("z", "-500", "500");
 
-            // === Use Comp Size Button ===
             var compBtn = win.add("button", undefined, "Use Composition Size");
             compBtn.onClick = function () {
                 var comp = app.project.activeItem;
@@ -35,17 +60,21 @@
                 xGroup.max.text = comp.width.toString();
                 yGroup.min.text = "0";
                 yGroup.max.text = comp.height.toString();
+
+                adjustEditWidth(xGroup.max);
+                adjustEditWidth(yGroup.max);
             };
 
-            // === Run Button ===
             var runBtn = win.add("button", undefined, "Run");
             runBtn.alignment = "center";
-
             runBtn.onClick = function () {
                 run(xGroup, yGroup, zGroup);
             };
 
             win.layout.layout(true);
+            win.onResizing = win.onResize = function () {
+                this.layout.resize();
+            };
         }
 
         return win;
