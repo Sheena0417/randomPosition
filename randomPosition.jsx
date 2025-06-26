@@ -1,26 +1,32 @@
-// ランダム範囲を指定（必要に応じて調整）
-var minX = -500, maxX = 500;
-var minY = -300, maxY = 300;
-var minZ = -200, maxZ = 200;
+function random(min, max) {
+    return min + (max - min) * Math.random();
+}
 
 var comp = app.project.activeItem;
 if (comp && comp instanceof CompItem) {
-    app.beginUndoGroup("Randomize Position");
+    var selectedLayers = comp.selectedLayers;
+    var compWidth = comp.width;
+    var compHeight = comp.height;
 
-    for (var i = 1; i <= comp.selectedLayers.length; i++) {
-        var layer = comp.selectedLayers[i - 1];
+    app.beginUndoGroup("Randomize X and Y");
 
-        // 3Dレイヤーになっていない場合は有効化
-        if (!layer.threeDLayer) {
-            layer.threeDLayer = true;
+    for (var i = 0; i < selectedLayers.length; i++) {
+        var layer = selectedLayers[i];
+
+        // 元のPosition値を取得
+        var pos = layer.property("Position").value;
+
+        // 新しいx, yをコンポサイズに合わせて生成
+        var x = random(0, compWidth);
+        var y = random(0, compHeight);
+
+        // 3Dレイヤーならzを保持、2Dレイヤーなら2次元でセット
+        if (layer.threeDLayer) {
+            var z = pos[2]; // zを保持
+            layer.property("Position").setValue([x, y, z]);
+        } else {
+            layer.property("Position").setValue([x, y]);
         }
-
-        var randomPos = [
-            random(minX, maxX),
-            random(minY, maxY),
-            random(minZ, maxZ)
-        ];
-        layer.property("Position").setValue(randomPos);
     }
 
     app.endUndoGroup();
